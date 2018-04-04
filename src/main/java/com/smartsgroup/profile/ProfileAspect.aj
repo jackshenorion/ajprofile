@@ -1,7 +1,7 @@
 package com.smartsgroup.profile;
 
 public aspect ProfileAspect {
-    pointcut methodCall(): @annotation(ProfileMethod) && call(* *(..)) && !within(MyAspectJDemo);
+    pointcut methodCall(): @annotation(ProfileMethod) && call(* *(..)) && !within(ProfileAspect);
 
     Object around(): methodCall() {
         long start = System.currentTimeMillis();
