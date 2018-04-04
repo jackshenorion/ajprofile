@@ -1,0 +1,40 @@
+group 'com.smartsgroup'
+version '1.0.0'
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/";;
+        }
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+        classpath "gradle.plugin.aspectj:gradle-aspectj:0.1.6"
+    }
+}
+project.ext {
+    aspectjVersion = "1.8.13"
+}
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "aspectj.gradle"
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = 1.8
+
+publishing {
+    publications {
+        mainJar(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
