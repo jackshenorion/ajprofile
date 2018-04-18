@@ -14,7 +14,12 @@ public class ProfilingProcessor {
 
     public static void onMethod(String signature, long startTimeStamp, long endTimeStamp) {
         methodStatistic(signature, startTimeStamp, endTimeStamp);
-        memoryStatistic(signature);
+        memoryStatistic(signature, false);
+    }
+
+    public static void onMethod(String signature, long startTimeStamp, long endTimeStamp, boolean forceRecord) {
+        methodStatistic(signature, startTimeStamp, endTimeStamp);
+        memoryStatistic(signature, forceRecord);
     }
 
     private static void methodStatistic(String signature, long startTimeStamp, long endTimeStamp) {
@@ -34,9 +39,9 @@ public class ProfilingProcessor {
         statistics.longestExecutionTime = statistics.longestExecutionTime > duration ? statistics.longestExecutionTime : duration;
     }
 
-    private static void memoryStatistic(String signature) {
+    private static void memoryStatistic(String signature, boolean forceRecord) {
         long invokedCount = methodInvokeCount.getOrDefault(signature, 0L);
-        if (invokedCount < 10 || (invokedCount & (invokedCount - 1)) == 0) {
+        if (forceRecord || invokedCount < 10 || (invokedCount & (invokedCount - 1)) == 0) {
             System.gc();
             long heapSize = Runtime.getRuntime().totalMemory();
             long heapMaxSize = Runtime.getRuntime().maxMemory();
@@ -99,7 +104,7 @@ public class ProfilingProcessor {
     }
 
     private static void log(String s) {
-        System.out.println(s);
+        logger.info(s);
     }
 
     public static String toTime(long timestamp) {
