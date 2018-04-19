@@ -7,10 +7,19 @@ import java.util.logging.Logger;
 public class ProfilingProcessor {
     private static Logger logger = Logger.getLogger(ProfilingProcessor.class.getName());
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+    private static boolean performGC = false;
 
     private static Map<String, MethodStatistics> statisticsMap = new HashMap<>();
     private static List<MemoryStatistics> memoryStatistics = new ArrayList<>();
     private static Map<String, Long> methodInvokeCount = new HashMap<>();
+
+    {
+        Properties properties = System.getProperties();
+        String property = properties.getProperty("AJProfilingGC", "false");
+        if ("true".equals(property)) {
+            performGC = true;
+        }
+    }
 
     public static void onMethod(String signature, long startTimeStamp, long endTimeStamp) {
         methodStatistic(signature, startTimeStamp, endTimeStamp);
@@ -42,7 +51,9 @@ public class ProfilingProcessor {
     private static void memoryStatistic(String signature, boolean forceRecord) {
         long invokedCount = methodInvokeCount.getOrDefault(signature, 0L);
         if (forceRecord || invokedCount < 10 || (invokedCount & (invokedCount - 1)) == 0) {
-            System.gc();
+            if (performGC) {
+                System.gc();
+            }
             long heapSize = Runtime.getRuntime().totalMemory();
             long heapMaxSize = Runtime.getRuntime().maxMemory();
             long heapFreeSize = Runtime.getRuntime().freeMemory();

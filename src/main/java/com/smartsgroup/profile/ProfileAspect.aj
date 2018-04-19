@@ -1,7 +1,7 @@
 package com.smartsgroup.profile;
 
 public aspect ProfileAspect {
-    pointcut methodCall(): @annotation(ProfileMethod) && call(* *(..)) && !within(ProfileAspect);
+    pointcut methodCall(): @annotation(ProfileMethod) && execution(* *(..)) && !within(ProfileAspect);
     pointcut finishMethodCall(): @annotation(FinishMethod) && execution(* *(..)) && !within(ProfileAspect);
 
     Object around(): methodCall() {
