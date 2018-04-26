@@ -1,5 +1,8 @@
 package com.smartsgroup.profile;
 
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.aspectj.lang.Signature;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
@@ -9,11 +12,11 @@ public class ProfilingProcessor {
     private static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
     private static boolean performGC = false;
 
-    private static Map<String, MethodStatistics> statisticsMap = new HashMap<>();
+    private static Map<Signature, MethodStatistics> statisticsMap = new HashMap<>();
     private static List<MemoryStatistics> memoryStatistics = new ArrayList<>();
-    private static Map<String, Long> methodInvokeCount = new HashMap<>();
+    private static Object2LongOpenHashMap<Signature> methodInvokeCount = new Object2LongOpenHashMap<>();
 
-    {
+    static {
         Properties properties = System.getProperties();
         String property = properties.getProperty("AJProfilingGC", "false");
         if ("true".equals(property)) {
@@ -21,23 +24,23 @@ public class ProfilingProcessor {
         }
     }
 
-    public static void onMethod(String signature, long startTimeStamp, long endTimeStamp) {
+    public static void onMethod(Signature signature, long startTimeStamp, long endTimeStamp) {
         methodStatistic(signature, startTimeStamp, endTimeStamp);
         memoryStatistic(signature, false);
     }
 
-    public static void onMethod(String signature, long startTimeStamp, long endTimeStamp, boolean forceRecord) {
+    public static void onMethod(Signature signature, long startTimeStamp, long endTimeStamp, boolean forceRecord) {
         methodStatistic(signature, startTimeStamp, endTimeStamp);
         memoryStatistic(signature, forceRecord);
     }
 
-    private static void methodStatistic(String signature, long startTimeStamp, long endTimeStamp) {
+    private static void methodStatistic(Signature signature, long startTimeStamp, long endTimeStamp) {
         long duration = endTimeStamp - startTimeStamp;
         MethodStatistics statistics = statisticsMap.get(signature);
         if (statistics == null) {
             statistics = new MethodStatistics();
             statisticsMap.put(signature, statistics);
-            statistics.signature = signature;
+            statistics.signature = signature.toString();
             statistics.firstStartTimeStamp = startTimeStamp;
             statistics.firstEndTimeStamp = endTimeStamp;
         }
@@ -48,7 +51,7 @@ public class ProfilingProcessor {
         statistics.longestExecutionTime = statistics.longestExecutionTime > duration ? statistics.longestExecutionTime : duration;
     }
 
-    private static void memoryStatistic(String signature, boolean forceRecord) {
+    private static void memoryStatistic(Signature signature, boolean forceRecord) {
         long invokedCount = methodInvokeCount.getOrDefault(signature, 0L);
         if (forceRecord || invokedCount < 10 || (invokedCount & (invokedCount - 1)) == 0) {
             if (performGC) {
@@ -57,7 +60,7 @@ public class ProfilingProcessor {
             long heapSize = Runtime.getRuntime().totalMemory();
             long heapMaxSize = Runtime.getRuntime().maxMemory();
             long heapFreeSize = Runtime.getRuntime().freeMemory();
-            memoryStatistics.add(new MemoryStatistics(signature, invokedCount + 1, heapSize, heapMaxSize, heapFreeSize));
+            memoryStatistics.add(new MemoryStatistics(signature.toString(), invokedCount + 1, heapSize, heapMaxSize, heapFreeSize));
         }
         methodInvokeCount.put(signature, invokedCount + 1);
     }
@@ -71,6 +74,7 @@ public class ProfilingProcessor {
         log("==============================================================================");
         log("==                      Method Profiling Result                             ==");
         log("==============================================================================");
+        log("AJProfilingGC: " + performGC);
         log(String.format("%15s,%15s,%15s,%15s,%15s,%15s,%15s,%15s,%s",
                 "First Start", "First End", "Execution Count", "Total Time", "Average Time", "Longest Time", "Last Start", "Last End", "Method"));
         statisticsMap.values().stream()

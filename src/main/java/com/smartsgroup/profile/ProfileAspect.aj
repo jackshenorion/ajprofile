@@ -10,7 +10,7 @@ public aspect ProfileAspect {
             return proceed();
         } finally {
             long endTime = System.currentTimeMillis();
-            ProfilingProcessor.onMethod(thisJoinPoint.getStaticPart().getSignature().toString(), startTime, endTime);
+            ProfilingProcessor.onMethod(thisJoinPoint.getStaticPart().getSignature(), startTime, endTime);
         }
     }
 
@@ -20,7 +20,7 @@ public aspect ProfileAspect {
             return proceed();
         } finally {
             long endTime = System.currentTimeMillis();
-            ProfilingProcessor.onMethod(thisJoinPoint.getStaticPart().getSignature().toString(), startTime, endTime, true);
+            ProfilingProcessor.onMethod(thisJoinPoint.getStaticPart().getSignature(), startTime, endTime, true);
             ProfilingProcessor.logResult();
         }
     }
